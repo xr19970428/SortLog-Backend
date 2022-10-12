@@ -26,7 +26,7 @@ pipeline {
             //  sh 'sudo rm -r ./data'
              }
         } 
-         stage('Build Docker image') {
+         stage('Build the Docker image') {
             steps {
                 sh 'docker build -t sortlogback .'
                 sh 'docker images --filter reference=sortlogback'
