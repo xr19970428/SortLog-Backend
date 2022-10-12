@@ -18,7 +18,7 @@ pipeline {
              
         }
 
-        stage('yarn build 1') 
+        stage('yarn build') 
         {
             steps{
              sh "yarn build "
@@ -26,7 +26,7 @@ pipeline {
             //  sh 'sudo rm -r ./data'
              }
         } 
-         stage('Build the Docker image') {
+         stage('Build Docker image') {
             steps {
                 sh 'docker build -t sortlogback .'
                 sh 'docker images --filter reference=sortlogback'
