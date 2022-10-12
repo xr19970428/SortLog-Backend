@@ -1,61 +1,40 @@
 pipeline {
-     agent any
-
-    environment{
-        CI ='true'
-        AWS_CRED        = 'AWS_sortlog' //Change to yours
-        AWS_REGION      = 'ap-southeast-2'
+    agent any
+    
+    environment {
+      registryCredential = 'ecr:ap-southeast-2:awscreds' 
+      appRegistry = "200167892154.dkr.ecr.ap-southeast-2.amazonaws.com/sortlogbackend"
+      vprofileRegistry = "https://200167892154.dkr.ecr.ap-southeast-2.amazonaws.com"
+      cluster = "sortlog"
+      service = "custom-service"
     }
 
     stages{
-        stage('Install dependency')
-        {
-            steps{
-             echo "Installing packages"
-             sh 'yarn install'
-             
-             }
-             
-        }
-
-        stage('yarn build') 
-        {
-            steps{
-             sh "yarn build "
-             sh 'ls -la ./dist'
-            //  sh 'sudo rm -r ./data'
-             }
+      stage('Build App Image') {
+        steps {   
+          script {
+            dockerImage = docker.build( appRegistry + ":$BUILD_NUMBER", ".")
+          }
         } 
-         stage('Build Docker image') {
-            steps {
-                sh 'docker build -t sortlogback .'
-                sh 'docker images --filter reference=sortlogback'
+      }
+
+      stage('Upload App Image') {
+        steps{
+          script {
+            docker.withRegistry( vprofileRegistry, registryCredential ) {
+                dockerImage.push("$BUILD_NUMBER")
+                dockerImage.push('latest')
             }
+          }
         }
-        // stage('Run Docker Container') 
-        // {
-        //     environment{MONGO_URL=credentials('MONGO_URL')}
-        //     steps {
-        //         sh 'docker-compose up '
-        //     }
-        //   }
+      }
 
-
-        stage('upload backend to  ECR bucket') {
-            steps {
-                withAWS(credentials: AWS_CRED, region: AWS_REGION)        
-               
-                {
-                    echo "deploy to ECR "
-                    sh '''
-                    docker tag sortlogback 003374733998.dkr.ecr.ap-southeast-2.amazonaws.com/sortlog-repository
-                    docker login -u AWS -p $(aws ecr get-login-password --region ap-southeast-2) 003374733998.dkr.ecr.ap-southeast-2.amazonaws.com/sortlog-repository
-                    docker push 003374733998.dkr.ecr.ap-southeast-2.amazonaws.com/sortlog-repository
-                    '''}
-             
-            }
-         
-         }
-
-    }
+      stage('Deploy to ecs') {
+        steps {
+          withAWS(credentials: 'awscreds', region: 'us-east-2') {
+                sh 'aws ecs update-service --cluster ${cluster} --service ${service} --force-new-deployment'
+          }
+        }
+      }
+  }
 }
