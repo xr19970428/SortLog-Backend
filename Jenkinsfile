@@ -3,7 +3,7 @@ pipeline {
     
     environment {
       registryCredential = 'ecr:ap-southeast-2:awscreds' 
-      appRegistry = "200167892154.dkr.ecr.ap-southeast-2.amazonaws.com/sortlogbackend"
+      appRegistry = "200167892154.dkr.ecr.ap-southeast-2.amazonaws.com/sortlog-repo"
       vprofileRegistry = "https://200167892154.dkr.ecr.ap-southeast-2.amazonaws.com"
       cluster = "sortlog"
       service = "custom-service"
@@ -29,12 +29,12 @@ pipeline {
         }
       }
 
-      stage('Deploy to ECS') {
-        steps {
-          withAWS(credentials: 'awscreds', region: 'us-east-2') {
-                sh 'aws ecs update-service --cluster ${cluster} --service ${service} --force-new-deployment'
-          }
-        }
-      }
+//       stage('Deploy to ECS') {
+//         steps {
+//           withAWS(credentials: 'awscreds', region: 'us-east-2') {
+//                 sh 'aws ecs update-service --cluster ${cluster} --service ${service} --force-new-deployment'
+//           }
+//         }
+//       }
   }
 }
